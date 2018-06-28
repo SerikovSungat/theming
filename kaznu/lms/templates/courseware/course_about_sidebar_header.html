@@ -1,0 +1,106 @@
+<%namespace name='static' file='../static_content.html'/>
+<%!
+from django.utils.translation import ugettext as _
+from django.core.urlresolvers import reverse
+from django.conf import settings
+from edxmako.shortcuts import marketing_link
+from openedx.core.lib.courses import course_image_url
+from courseware.courses import get_course_about_section
+%>
+<%! from microsite_configuration import microsite %> 
+
+<header>
+  % if static.get_value('course_about_show_social_links', True):
+  <div class="social-sharing">
+    <div class="sharing-message">${_("Share with friends and family!")}</div>
+    ## TODO: this should probably be an overrideable block,
+    ##       or something allowing themes to do whatever they
+    ##       want here (and on this whole page, really).
+   .format(
+
+<!-- VK sharing -->
+<%
+    site_domain = microsite.get_value('site_domain', settings.SITE_NAME)
+    platform_name = microsite.get_value('platform_name', settings.PLATFORM_NAME)
+    platform_url = "http://{}".format(site_domain)
+    course_url = "{site_domain}{course_location}".format(
+        site_domain=platform_url,
+        course_location=reverse('about_course', args=[course.id])
+    )
+    course_image = "{site_domain}{course_location}".format(
+        site_domain=platform_url,
+        course_location=course_image_url(course)
+    )
+    course_title = course.display_name_with_default
+    vk_share_text = "Я буду проходить этот курс! Присоединяйтесь: {course_url}".format(
+        course_url=course_url
+    )
+   #course_image = static.url(course_image_url(course))
+%>
+ <script type="text/javascript" src="https://vk.com/js/api/share.js?90" charset="windows-1251"></script>
+  <script type="text/javascript">
+    $(document).ready(function(){
+	    $("#vkSharer").html(VK.Share.button({
+            url: '${course_url}',
+            title: '${course_title}',
+            description: '${vk_share_text}',
+            image: '${course_image}',
+            noparse: true
+        }, {
+            type: 'custom',
+            text: '<i class="icon fa fa-vk"></i><span class="sr">Post a VK message to say you\'ve registered for this course</span>'
+        }));
+	});
+  </script>
+
+
+
+       <%
+        site_domain = static.get_value('site_domain', settings.SITE_NAME)
+        platform_name = static.get_platform_name()
+
+        ## Translators: This text will be automatically posted to the student's
+        ## Twitter account. {url} should appear at the end of the text.
+        tweet_text = _("I just enrolled in {number} {title} through {account}: {url}").format(
+            number=course.number,
+            title=course.display_name_with_default_escaped,
+            account=static.get_value('course_about_twitter_account', settings.PLATFORM_TWITTER_ACCOUNT),
+            url=u"https://{domain}{path}".format(
+                domain=site_domain,
+                path=reverse('about_course', args=[course.id.to_deprecated_string()])
+            )
+        ).replace(u" ", u"+")
+        tweet_action = u"http://twitter.com/intent/tweet?text={tweet_text}".format(tweet_text=tweet_text)
+
+        facebook_link = static.get_value('course_about_facebook_link', settings.PLATFORM_FACEBOOK_ACCOUNT)
+
+        email_subject = u"mailto:?subject={subject}&body={body}".format(
+            subject=_("Take a course with {platform} online").format(platform=platform_name),
+            body=_("I just enrolled in {number} {title} through {platform} {url}").format(
+                number=course.number,
+                title=course.display_name_with_default_escaped,
+                platform=platform_name,
+                url=u"https://{domain}{path}".format(
+                    domain=site_domain,
+                    path=reverse('about_course', args=[course.id.to_deprecated_string()]),
+                )
+            )
+        ).replace(u" ", u"%20")
+      %>
+
+      <style type="text/css">span#vkSharer span{color: #000;}</style>
+              <span id="vkSharer" class="share"></span>
+      <a href="${tweet_action}" class="share">
+        <span class="fa fa-twitter fa-lg" aria-hidden="true"></span><span class="sr">${_("Tweet that you've enrolled in this course")}</span>
+      </a>
+      <a href="${facebook_link}" class="share">
+        <span class="fa fa-facebook fa-lg" aria-hidden="true"></span><span class="sr">${_("Post in Facebook  message to say you've enrolled in this course")}</span>
+      </a>
+##      <a href="${email_subject}" class="share">
+  ##      <span class="fa fa-envelope fa-lg" aria-hidden="true"></span><span class="sr">${_("Email someone to say you've enrolled in this course")}</span>
+    ##  </a>
+
+     
+  </div>
+  % endif
+</header>

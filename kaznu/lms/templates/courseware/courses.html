@@ -1,0 +1,142 @@
+<%!
+  import json
+  from django.utils.translation import ugettext as _, pgettext as _p, ungettext
+  from microsite_configuration import microsite
+  from openedx.core.djangolib.js_utils import dump_js_escaped_json
+  from ifmo_catalog.utils import get_all_categories, filter_visible_courses
+  from ifmo_catalog.utils import get_mapped_index_courses, filter_visible_courses
+%>
+<%inherit file="../main.html" />
+<%
+  course_discovery_enabled = settings.FEATURES.get('ENABLE_COURSE_DISCOVERY')
+  index_courses = filter_visible_courses(courses)
+%>
+
+<%namespace name='static' file='../static_content.html'/>
+
+% if course_discovery_enabled:
+<%block name="header_extras">
+  % for template_name in ["course_card", "filter_bar", "filter", "facet", "facet_option"]:
+  <script type="text/template" id="${template_name}-tpl">
+      <%static:include path="discovery/${template_name}.underscore" />
+  </script>
+  % endfor
+  <%static:require_module module_name="js/discovery/discovery_factory" class_name="DiscoveryFactory">
+    DiscoveryFactory(
+      ${ escape_json_dumps(course_discovery_meanings) | n },
+      getParameterByName('search_query')
+    );
+  </%static:require_module>
+</%block>
+% endif
+
+<%block name="js_extra">
+  <script type="text/javascript" src="${static.url('js/ifmo-catalog.js')}"></script>
+</%block>
+
+<%block name="pagetitle">${_("Courses")}</%block>
+<%
+  platform_name = microsite.get_value('platform_name', settings.PLATFORM_NAME)
+  
+  categories = get_all_categories()
+
+  # Локальные переменные будут обновлены контекстом только после того, как
+  # выполнится этот блок, поэтому заберём курсы самостоятельно.
+  filtered_courses = filter_visible_courses(context.get('courses'))
+%>
+
+<section class="find-courses">
+
+    <section class="courses-container">
+
+    % if course_discovery_enabled:
+    <div id="discovery-form" role="search" aria-label="course">
+      <form>
+        <input class="discovery-input" placeholder="${_('Search for a course')}" type="text"/><!-- removes spacing
+        --><button type="submit" class="button postfix discovery-submit" aria-label="${_('Search')}">
+          <i class="icon fa fa-search" aria-hidden="true"></i>
+        </button>
+      </form>
+      <div id="discovery-message"></div>
+      <div aria-live="polite" aria-relevant="all">
+        <div id="loading-indicator" class="hidden">
+          <i class="icon fa fa-spinner fa-spin"></i> ${_('Loading')}
+        </div>
+      </div>
+    </div>
+
+    <div id="filter-bar" class="filters hide-phone">
+    </div>
+    % endif
+
+      <div id="ifmo-total-courses">
+          <span class="ifmo-total-courses-all">Показаны все ${ungettext(" ","{num}", len(index_courses)).format(num=len(index_courses))} курсов</span>  
+          <span class="ifmo-total-courses-matching"> Найдено <span class="ifmo-total-courses">{{ len(filtered_courses) }}</span> курсов</span>
+      </div>
+  
+               <div class="ifmo-catalog-search" style="padding-top:30px;" >
+                   <input type="text" placeholder="Поиск курсов" style="text-center;font-size:16px;margin-bottom:30px;">
+               </div>
+
+        <section class="ifmo-courses-and-catalog-container">
+            <section class="ifmo-catalog-container">
+               <div class="ifmo-catalog">
+   ##                 <div class="ifmo-catalog-search">
+     ##                   <i class="icon fa fa-search"></i>
+       ##                 <input type="text" placeholder="Поиск курсов">
+         ##           </div>
+                    <hr>
+                    <ul>
+                       <h3>Статус курсов</h3>
+                        <li>
+                            <h4>${_p('ifmo-catalog', '')}</h4>
+                            <ul class="time-filters">
+                                <li filter="started"><p>Сейчас идет</p>${_p('ifmo-catalog', '')}</li>
+                                <li filter="upcoming"><p>Скоро старт</p>${_p('ifmo-catalog', '')}</li>
+                                <li filter="ended"><p>В архиве</p>${_p('ifmo-catalog', '')}</li>
+                            </ul>
+                        </li>
+                        %for category in categories:
+                            %if category.category_set.all():
+                            <hr>
+                            <li>
+                                <h3>${category.name}</h3>
+                                <ul class="category-filters">
+                                    %for child in sorted(category.category_set.all(), key=lambda c: c.priority):
+                                        <li filter="${child.id}">${child.name}</li>
+                                    %endfor
+                                </ul>
+                            </li>
+                            %endif
+                        %endfor
+                    </ul>
+                </div>
+            </section>
+
+            <section class="courses${'' if course_discovery_enabled else ' no-course-discovery'} ifmo-override">
+                <h3 class="ifmo-no-courses-found">Курсы не найдены</h3>
+                <ul class="courses-listing ifmo-listing">
+                    %for course in filtered_courses:
+                        <li class="ifmo-courses-listing-item">
+                                <%include file="../course.html" args="course=course" />
+                        </li>
+                    %endfor
+                </ul>
+  
+                <a class="btn-view ifmo-catalog-more-courses" style="text-decoration:none;color:#fff;">
+                   Больше курсов
+                </a>
+  
+           </section>
+        </section>
+
+
+    % if course_discovery_enabled:
+    <aside aria-label="${_('Refine your search')}" class="search-facets phone-menu">
+    </aside>
+    % endif
+
+  </section>
+</section>
+
+<%include file="../_ifmo_background.html" />

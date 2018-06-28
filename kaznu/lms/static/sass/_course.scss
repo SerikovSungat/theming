@@ -1,0 +1,120 @@
+/*
+    Курс на странице с плитками:
+      /
+      /courses
+*/
+
+.ifmo {
+
+  &-course {
+
+    &-author {
+      display: block;
+      color: #646464;
+      letter-spacing: 1px;
+    }
+
+    // Название курса на странице с плиткой курсов
+    &-title {
+      letter-spacing: 0;
+    }
+
+  }
+
+  &-author {
+
+    &-container {
+      height: 120px;
+      position: absolute;
+      top: $baseline;
+      color: #fff;
+      z-index: 100;
+      width: 100%;
+      overflow: hidden;
+      padding-left: $baseline;
+      padding-right: $baseline;
+      box-sizing: border-box;
+      opacity: 0;
+    }
+
+    &-filler {
+      display:  inline-block;
+      height: 100%;
+      vertical-align: middle;
+      font-size: 0;
+    }
+
+    &-data {
+      display:  inline-block;
+      vertical-align: middle;
+      line-height: $baseline;
+
+      span {
+        color:  #fff;
+      }
+
+      p {
+        color: #fff;
+        font: normal 1em/1.6em "Open Sans",Verdana,Geneva,sans-serif,sans-serif;
+        width: 100%;
+        padding-left: $baseline;
+        box-sizing: border-box;
+      }
+
+    }
+
+  }
+
+}
+
+.course {
+
+  &:hover,
+  &:focus {
+    .ifmo-author-container {
+      @include transition(opacity $tmg-f2 ease-out $tmg-f2);
+      opacity: 1;
+    }
+    .cover-image {
+      &:before {
+        opacity: 0.75 !important;
+      }
+    }
+  }
+
+}
+
+
+
+/*
+    Fix for course description in course list do properly display course_author field.
+*/
+article.course .info div.desc {
+  height: 95px !important;
+}
+
+article.course .info div.bottom-wrapper {
+  height: 155px;
+  display: table;
+}
+
+article.course .info div.bottom {
+  height: 100% !important;
+  vertical-align: bottom;
+  display: table-cell;
+}
+
+/*
+    Fix NEW-sign.
+*/
+
+article.course span.status {
+  top: -15px !important;
+}
+
+article.course span.status:after {
+  border-bottom-width: 14px !important;
+  border-right-width: 15px !important;
+  right: -15px !important;
+  top: 1px !important;
+}
